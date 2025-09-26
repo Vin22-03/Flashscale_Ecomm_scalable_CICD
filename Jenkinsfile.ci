@@ -85,9 +85,7 @@ pipeline {
         }
         failure {
             echo "❌ CI Pipeline Failed: Check logs in Jenkins"
-        }
-        always {
-            cleanWs()
+        
         }
     }
-}
+
