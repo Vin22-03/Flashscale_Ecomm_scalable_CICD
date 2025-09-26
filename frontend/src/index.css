@@ -1,0 +1,9 @@
+/* src/index.css */
+@import "tailwindcss";
+
+/* Force test */
+/*
+This isn't necessary. It's better to add classes directly to your body element
+in index.html for better maintainability.
+*/
+
