@@ -1,0 +1,87 @@
+pipeline {
+    agent any
+
+    environment {
+        AWS_DEFAULT_REGION = "us-east-1"
+        ECR_REPO           = "flashscale-app"          // change if needed
+        AWS_CREDS          = "aws-ecr"                 // Jenkins AWS creds ID
+        DOCKER_IMAGE       = "921483785411.dkr.ecr.us-east-1.amazonaws.com/flashscale-app"
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main',
+                    credentialsId: 'github-creds',
+                    url: 'https://github.com/Vin22-03/Flashscale_Ecomm_scalable_CICD.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    sh """
+                        echo "🔨 Building Docker image..."
+                        docker build -t $ECR_REPO:latest .
+                    """
+                }
+            }
+        }
+
+        stage('Trivy Scan') {
+            steps {
+                script {
+                    sh """
+                        echo "🔍 Scanning Docker image with Trivy..."
+                        trivy image --exit-code 0 --severity HIGH,CRITICAL $ECR_REPO:latest
+                    """
+                }
+            }
+        }
+
+        stage('Generate SBOM with Syft') {
+            steps {
+                script {
+                    sh """
+                        echo "📦 Generating SBOM..."
+                        syft $ECR_REPO:latest -o json > sbom.json
+                    """
+                }
+            }
+        }
+
+        stage('Login to AWS ECR') {
+            steps {
+                withAWS(credentials: "${AWS_CREDS}", region: "${AWS_DEFAULT_REGION}") {
+                    sh """
+                        echo "🔑 Logging into AWS ECR..."
+                        aws ecr get-login-password --region $AWS_DEFAULT_REGION \
+                        | docker login --username AWS --password-stdin 921483785411.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+                    """
+                }
+            }
+        }
+
+        stage('Tag & Push Image to ECR') {
+            steps {
+                script {
+                    sh """
+                        docker tag $ECR_REPO:latest $DOCKER_IMAGE:\$BUILD_NUMBER
+                        docker tag $ECR_REPO:latest $DOCKER_IMAGE:latest
+                        docker push $DOCKER_IMAGE:\$BUILD_NUMBER
+                        docker push $DOCKER_IMAGE:latest
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ CI pipeline completed successfully! Image pushed to ECR."
+        }
+        failure {
+            echo "❌ CI pipeline failed. Check logs."
+        }
+    }
+}
