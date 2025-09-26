@@ -1,85 +1,172 @@
-pipeline {
-    agent any
+timestamps {
+    pipeline {
+        agent any
 
-    environment {
-        AWS_REGION   = "us-east-1"
-        AWS_ACCOUNT  = "921483785411"
-        BACKEND_REPO = "${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/flashscale-backend"
-        FRONTEND_REPO = "${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/flashscale-frontend"
-    }
-
-    options {
-        buildDiscarder(logRotator(numToKeepStr: '10'))   // keep last 10 builds
-        timestamps()
-    }
-
-    stages {
-        stage('Checkout Code') {
-            steps {
-                git branch: 'main',
-                    url: 'https://github.com/Vin22-03/Flashscale_Ecomm_scalable_CICD.git',
-                    credentialsId: 'github-creds'
-            }
+        environment {
+            AWS_REGION    = "us-east-1"
+            AWS_ACCOUNT   = "921483785411"
+            BACKEND_REPO  = "${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/flashscale-backend"
+            FRONTEND_REPO = "${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/flashscale-frontend"
         }
 
-        stage('Login to AWS ECR') {
-            steps {
-                withAWS(region: "${AWS_REGION}", credentials: 'aws-ecr') {
+        options {
+            buildDiscarder(logRotator(numToKeepStr: '10'))   // keep last 10 builds
+        }
+
+        stages {
+            stage('Checkout Code') {
+                steps {
+                    git branch: 'main',
+                        url: 'https://github.com/Vin22-03/Flashscale_Ecomm_scalable_CICD.git',
+                        credentialsId: 'github-creds'
+                }
+            }
+
+            stage('Login to AWS ECR') {
+                steps {
+                    withAWS(region: "${AWS_REGION}", credentials: 'aws-ecr') {
+                        sh '''
+                            echo "🔑 Logging into Amazon ECR..."
+                            aws ecr get-login-password --region $AWS_REGION | \
+                            docker login --username AWS --password-stdin $AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com
+                        '''
+                    }
+                }
+            }
+
+            stage('Build Backend Docker Image') {
+                steps {
+                    dir('backend') {
+                        sh '''
+                            echo "🔨 Building Backend..."
+                            docker build -t flashscale-backend:latest .
+                            docker tag flashscale-backend:latest $BACKEND_REPO:latest
+                        '''
+                    }
+                }
+            }
+
+            stage('Build Frontend Docker Image') {
+                steps {
+                    dir('frontend') {
+                        sh '''
+                            echo "🎨 Building Frontend..."
+                            docker build -t flashscale-frontend:latest .
+                            docker tag flashscale-frontend:latest $FRONTEND_REPO:latest
+                        '''
+                    }
+                }
+            }
+
+            stage('Push Images to ECR') {
+                steps {
                     sh '''
-                        echo "🔑 Logging into Amazon ECR..."
-                        aws ecr get-login-password --region $AWS_REGION | \
-                        docker login --username AWS --password-stdin $AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com
+                        echo "📤 Pushing Backend Image..."
+                        docker push $BACKEND_REPO:latest
+
+                        echo "📤 Pushing Frontend Image..."
+                        docker push $FRONTEND_REPO:latest
                     '''
                 }
             }
         }
 
-        stage('Build Backend Docker Image') {
-            steps {
-                dir('backend') {
-                    sh '''
-                        echo "🔨 Building Backend..."
-                        docker build -t flashscale-backend:latest .
-                        docker tag flashscale-backend:latest $BACKEND_REPO:latest
-                    '''
-                }
+        post {
+            success {
+                echo "✅ CI Pipeline Success: Backend & Frontend pushed to ECR"
             }
-        }
-
-        stage('Build Frontend Docker Image') {
-            steps {
-                dir('frontend') {
-                    sh '''
-                        echo "🎨 Building Frontend..."
-                        docker build -t flashscale-frontend:latest .
-                        docker tag flashscale-frontend:latest $FRONTEND_REPO:latest
-                    '''
-                }
+            failure {
+                echo "❌ CI Pipeline Failed: Check logs in Jenkins"
             }
-        }
-
-        stage('Push Images to ECR') {
-            steps {
-                sh '''
-                    echo "📤 Pushing Backend Image..."
-                    docker push $BACKEND_REPO:latest
-
-                    echo "📤 Pushing Frontend Image..."
-                    docker push $FRONTEND_REPO:latest
-                '''
+            always {
+                cleanWs()
             }
         }
     }
+}
+timestamps {
+    pipeline {
+        agent any
 
-    post {
-        success {
-            echo "✅ CI Pipeline Success: Backend & Frontend pushed to ECR"
+        environment {
+            AWS_REGION    = "us-east-1"
+            AWS_ACCOUNT   = "921483785411"
+            BACKEND_REPO  = "${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/flashscale-backend"
+            FRONTEND_REPO = "${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/flashscale-frontend"
         }
-        failure {
-            echo "❌ CI Pipeline Failed: Check logs in Jenkins"
+
+        options {
+            buildDiscarder(logRotator(numToKeepStr: '10'))   // keep last 10 builds
         }
-        always {
-            cleanWs()
+
+        stages {
+            stage('Checkout Code') {
+                steps {
+                    git branch: 'main',
+                        url: 'https://github.com/Vin22-03/Flashscale_Ecomm_scalable_CICD.git',
+                        credentialsId: 'github-creds'
+                }
+            }
+
+            stage('Login to AWS ECR') {
+                steps {
+                    withAWS(region: "${AWS_REGION}", credentials: 'aws-ecr') {
+                        sh '''
+                            echo "🔑 Logging into Amazon ECR..."
+                            aws ecr get-login-password --region $AWS_REGION | \
+                            docker login --username AWS --password-stdin $AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com
+                        '''
+                    }
+                }
+            }
+
+            stage('Build Backend Docker Image') {
+                steps {
+                    dir('backend') {
+                        sh '''
+                            echo "🔨 Building Backend..."
+                            docker build -t flashscale-backend:latest .
+                            docker tag flashscale-backend:latest $BACKEND_REPO:latest
+                        '''
+                    }
+                }
+            }
+
+            stage('Build Frontend Docker Image') {
+                steps {
+                    dir('frontend') {
+                        sh '''
+                            echo "🎨 Building Frontend..."
+                            docker build -t flashscale-frontend:latest .
+                            docker tag flashscale-frontend:latest $FRONTEND_REPO:latest
+                        '''
+                    }
+                }
+            }
+
+            stage('Push Images to ECR') {
+                steps {
+                    sh '''
+                        echo "📤 Pushing Backend Image..."
+                        docker push $BACKEND_REPO:latest
+
+                        echo "📤 Pushing Frontend Image..."
+                        docker push $FRONTEND_REPO:latest
+                    '''
+                }
+            }
+        }
+
+        post {
+            success {
+                echo "✅ CI Pipeline Success: Backend & Frontend pushed to ECR"
+            }
+            failure {
+                echo "❌ CI Pipeline Failed: Check logs in Jenkins"
+            }
+            always {
+                cleanWs()
+            }
         }
     }
 }
