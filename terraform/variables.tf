@@ -1,11 +1,27 @@
+############################################################
+# variables.tf – FlashScale Hybrid GitOps Infra
+############################################################
+
 variable "region" {
-  default = "us-east-1"
+  description = "AWS region to deploy resources"
+  type        = string
+  default     = "us-east-1"
 }
 
 variable "project" {
-  default = "flashscale"
+  description = "Project name prefix for all resources"
+  type        = string
+  default     = "flashscale"
 }
 
 variable "vpc_cidr" {
-  default = "10.0.0.0/16"
+  description = "CIDR block for the VPC"
+  type        = string
+  default     = "10.0.0.0/16"
+}
+
+variable "db_password" {
+  description = "Password for RDS Postgres database"
+  type        = string
+  sensitive   = true
 }
