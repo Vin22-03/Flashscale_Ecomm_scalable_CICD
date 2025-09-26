@@ -8,6 +8,11 @@ pipeline {
         FRONTEND_REPO = "${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com/flashscale-frontend"
     }
 
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))   // keep last 10 builds
+        timestamps()
+    }
+
     stages {
         stage('Checkout Code') {
             steps {
@@ -65,16 +70,16 @@ pipeline {
             }
         }
     }
-}
 
     post {
         success {
-            echo "✅ CI pipeline completed successfully! Image pushed to ECR."
+            echo "✅ CI Pipeline Success: Backend & Frontend pushed to ECR"
         }
         failure {
-            echo "❌ CI pipeline failed. Check logs."
+            echo "❌ CI Pipeline Failed: Check logs in Jenkins"
+        }
+        always {
+            cleanWs()
         }
     }
-}
-
 }
