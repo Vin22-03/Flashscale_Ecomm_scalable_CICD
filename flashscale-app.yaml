@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: flashscale
+  namespace: argocd   # ArgoCD lives in this namespace
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/Vin22-03/Flashscale_Ecomm_scalable_CICD.git'
+    targetRevision: main   # branch to watch
+    path: k8s              # folder where your YAMLs live
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: flashscale   # your app namespace
+  syncPolicy:
+    automated:             # enable auto sync
+      prune: true          # remove deleted manifests
+      selfHeal: true       # fix drift automatically

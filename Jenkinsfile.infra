@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    parameters {
+        choice(name: 'ACTION', choices: ['apply', 'destroy'], description: 'Choose whether to apply or destroy the infrastructure')
+    }
+
     environment {
         AWS_REGION = "us-east-1"
     }
@@ -25,6 +29,9 @@ pipeline {
         }
 
         stage('Terraform Plan') {
+            when {
+                expression { params.ACTION == 'apply' }
+            }
             steps {
                 withAWS(credentials: 'aws-ecr', region: "${env.AWS_REGION}") {
                     dir('terraform') {
@@ -35,11 +42,28 @@ pipeline {
         }
 
         stage('Terraform Apply') {
+            when {
+                expression { params.ACTION == 'apply' }
+            }
             steps {
                 input message: "⚡ Approve to Apply Infra?"
                 withAWS(credentials: 'aws-ecr', region: "${env.AWS_REGION}") {
                     dir('terraform') {
                         sh 'terraform apply -auto-approve tfplan'
+                    }
+                }
+            }
+        }
+
+        stage('Terraform Destroy') {
+            when {
+                expression { params.ACTION == 'destroy' }
+            }
+            steps {
+                input message: "⚠️ Are you sure you want to DESTROY all infra?"
+                withAWS(credentials: 'aws-ecr', region: "${env.AWS_REGION}") {
+                    dir('terraform') {
+                        sh 'terraform destroy -auto-approve'
                     }
                 }
             }
