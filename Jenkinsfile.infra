@@ -1,0 +1,48 @@
+pipeline {
+    agent any
+
+    environment {
+        AWS_REGION = "us-east-1"
+    }
+
+    stages {
+        stage('Checkout Repo') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/Vin22-03/Flashscale_Ecomm_scalable_CICD.git',
+                    credentialsId: 'github-creds'
+            }
+        }
+
+        stage('Terraform Init') {
+            steps {
+                withAWS(credentials: 'aws-ecr', region: "${env.AWS_REGION}") {
+                    dir('terraform') {
+                        sh 'terraform init'
+                    }
+                }
+            }
+        }
+
+        stage('Terraform Plan') {
+            steps {
+                withAWS(credentials: 'aws-ecr', region: "${env.AWS_REGION}") {
+                    dir('terraform') {
+                        sh 'terraform plan -out=tfplan'
+                    }
+                }
+            }
+        }
+
+        stage('Terraform Apply') {
+            steps {
+                input message: "⚡ Approve to Apply Infra?"
+                withAWS(credentials: 'aws-ecr', region: "${env.AWS_REGION}") {
+                    dir('terraform') {
+                        sh 'terraform apply -auto-approve tfplan'
+                    }
+                }
+            }
+        }
+    }
+}
