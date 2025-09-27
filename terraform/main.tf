@@ -1,7 +1,6 @@
 ############################################################
-# main.tf – FlashScale Hybrid GitOps Infra
-# Infra: VPC + EKS + ECR + IAM + RDS + ALB + Metrics + Autoscaler
-# Workloads (blue/green, services, HPA, ingress) → ArgoCD
+# main.tf – FlashScale Infra (Hybrid GitOps with ArgoCD)
+# Components: VPC + EKS + IRSA + ECR + RDS + ALB IAM roles
 ############################################################
 
 terraform {
@@ -16,15 +15,29 @@ terraform {
       version = "~> 2.30"
     }
   }
+
+  # Backend moved to backend.tf for state mgmt (S3 + DynamoDB)
 }
 
 provider "aws" {
   region = var.region
 }
 
-# -----------------
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+  token                  = data.aws_eks_cluster_auth.this.token
+}
+
+data "aws_availability_zones" "available" {}
+data "aws_caller_identity" "current" {}
+data "aws_eks_cluster_auth" "this" {
+  name = module.eks.cluster_name
+}
+
+############################################################
 # VPC
-# -----------------
+############################################################
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "5.1.2"
@@ -42,11 +55,9 @@ module "vpc" {
   tags = { Project = var.project }
 }
 
-data "aws_availability_zones" "available" {}
-
-# -----------------
+############################################################
 # EKS Cluster
-# -----------------
+############################################################
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "20.8.4"
@@ -65,43 +76,50 @@ module "eks" {
     }
   }
 
-  enable_irsa = true   # allow IAM roles for service accounts
+  enable_irsa = true   # enables OIDC provider for IRSA
 
   tags = { Project = var.project }
 }
 
-# -----------------
-# IAM RBAC Mapping
-# -----------------
-# Maps worker node role + Jenkins IAM user (jenkins-ecr) to cluster-admin
-resource "kubernetes_config_map" "aws_auth" {
-  depends_on = [module.eks]
+############################################################
+# IAM Roles for Service Accounts (IRSA)
+############################################################
 
-  metadata {
-    name      = "aws-auth"
-    namespace = "kube-system"
-  }
+# ALB Ingress Controller Role
+module "alb_irsa" {
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version = "5.34.0"
 
-  data = {
-    mapRoles = yamlencode([{
-      rolearn  = module.eks.eks_managed_node_groups["default"].iam_role_arn
-      username = "system:node:{{EC2PrivateDNSName}}"
-      groups   = ["system:bootstrappers", "system:nodes"]
-    }])
+  role_name                              = "${var.project}-alb-controller"
+  attach_load_balancer_controller_policy = true
 
-    mapUsers = yamlencode([{
-      userarn  = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/jenkins-ecr"
-      username = "jenkins"
-      groups   = ["system:masters"]
-    }])
+  oidc_providers = {
+    main = {
+      provider_arn               = module.eks.oidc_provider_arn
+      namespace_service_accounts = ["kube-system:aws-load-balancer-controller"]
+    }
   }
 }
 
-data "aws_caller_identity" "current" {}
+# Cluster Autoscaler Role
+module "autoscaler_irsa" {
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version = "5.34.0"
 
-# -----------------
-# ECR Repos
-# -----------------
+  role_name                        = "${var.project}-cluster-autoscaler"
+  attach_cluster_autoscaler_policy = true
+
+  oidc_providers = {
+    main = {
+      provider_arn               = module.eks.oidc_provider_arn
+      namespace_service_accounts = ["kube-system:cluster-autoscaler"]
+    }
+  }
+}
+
+############################################################
+# ECR Repositories
+############################################################
 resource "aws_ecr_repository" "backend" {
   name         = "${var.project}-backend"
   force_delete = true
@@ -112,9 +130,9 @@ resource "aws_ecr_repository" "frontend" {
   force_delete = true
 }
 
-# -----------------
+############################################################
 # RDS (Postgres)
-# -----------------
+############################################################
 module "rds" {
   source  = "terraform-aws-modules/rds/aws"
   version = "6.5.2"
@@ -140,39 +158,16 @@ module "rds" {
   tags = { Project = var.project }
 }
 
-# -----------------
-# ALB Ingress Controller IAM Role
-# -----------------
-module "alb_irsa" {
-  source  = "terraform-aws-modules/iam-role-for-service-accounts-eks/aws"
-  version = "5.34.0"
+############################################################
+# ArgoCD (CD – installed later via Helm)
+############################################################
+# Note: We’ll use ArgoCD Helm chart in a separate step, after cluster is up.
+# Terraform will create namespace + service account with IRSA if required.
 
-  role_name             = "${var.project}-alb-controller"
-  attach_load_balancer_controller_policy = true
-
-  oidc_providers = {
-    main = {
-      provider_arn               = module.eks.oidc_provider_arn
-      namespace_service_accounts = ["kube-system:aws-load-balancer-controller"]
-    }
+resource "kubernetes_namespace" "argocd" {
+  metadata {
+    name = "argocd"
   }
 }
 
-# -----------------
-# Cluster Autoscaler IAM Role
-# -----------------
-module "autoscaler_irsa" {
-  source  = "terraform-aws-modules/iam-role-for-service-accounts-eks/aws"
-  version = "5.34.0"
-
-  role_name                  = "${var.project}-cluster-autoscaler"
-  attach_cluster_autoscaler_policy = true
-
-  oidc_providers = {
-    main = {
-      provider_arn               = module.eks.oidc_provider_arn
-      namespace_service_accounts = ["kube-system:cluster-autoscaler"]
-    }
-  }
-}
-
+# (You will apply Helm release for ArgoCD in another file or via ArgoCD itself)
