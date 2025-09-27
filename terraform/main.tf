@@ -1,6 +1,7 @@
 ############################################################
-# main.tf – FlashScale Infra (Hybrid GitOps with ArgoCD)
-# Components: VPC + EKS + IRSA + ECR + RDS + ALB IAM roles
+# main.tf – FlashScale Infra (Hybrid GitOps Ready)
+# Components: VPC + EKS + IRSA + ECR + RDS
+# Note: ArgoCD will be deployed separately via Helm/kubectl
 ############################################################
 
 terraform {
@@ -15,25 +16,14 @@ terraform {
       version = "~> 2.30"
     }
   }
-
-  # Backend moved to backend.tf for state mgmt (S3 + DynamoDB)
 }
 
 provider "aws" {
   region = var.region
 }
 
-provider "kubernetes" {
-  host                   = module.eks.cluster_endpoint
-  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-  token                  = data.aws_eks_cluster_auth.this.token
-}
-
 data "aws_availability_zones" "available" {}
 data "aws_caller_identity" "current" {}
-data "aws_eks_cluster_auth" "this" {
-  name = module.eks.cluster_name
-}
 
 ############################################################
 # VPC
@@ -47,7 +37,7 @@ module "vpc" {
 
   azs             = slice(data.aws_availability_zones.available.names, 0, 2)
   public_subnets  = [for i in range(2) : cidrsubnet(var.vpc_cidr, 4, i)]
-  private_subnets = [for i in range(2,4) : cidrsubnet(var.vpc_cidr, 4, i)]
+  private_subnets = [for i in range(2, 4) : cidrsubnet(var.vpc_cidr, 4, i)]
 
   enable_nat_gateway = true
   single_nat_gateway = true
@@ -116,7 +106,7 @@ module "autoscaler_irsa" {
     }
   }
 
-  # 🔧 Pass cluster details to avoid coalescelist error
+  # Avoid coalescelist error
   cluster_autoscaler_cluster_names = var.cluster_autoscaler_cluster_names
   cluster_autoscaler_cluster_ids   = var.cluster_autoscaler_cluster_ids
 }
@@ -152,8 +142,7 @@ module "rds" {
   password = var.db_password
   port     = 5432
 
-  # 🔧 Fix missing required argument
-  family = var.family
+  family = var.family # required for parameter group
 
   publicly_accessible = false
   multi_az            = false
@@ -166,12 +155,7 @@ module "rds" {
 }
 
 ############################################################
-# ArgoCD (CD – installed later via Helm)
+# 🚫 ArgoCD
+# Removed from infra stack to avoid i/o timeout.
+# Deploy it later with Helm once kubeconfig is working.
 ############################################################
-resource "kubernetes_namespace" "argocd" {
-  metadata {
-    name = "argocd"
-  }
-}
-
-# (You will apply Helm release for ArgoCD in another file or via ArgoCD itself)
