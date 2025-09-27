@@ -133,7 +133,7 @@ module "rds" {
 
   identifier        = "${var.project}-db"
   engine            = "postgres"
-  engine_version    = "15.5"
+  engine_version    = "15.4"
   instance_class    = "db.t3.micro"
   allocated_storage = 20
 
