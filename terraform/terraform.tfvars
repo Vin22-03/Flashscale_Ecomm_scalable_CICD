@@ -7,4 +7,4 @@ db_password = "StrongPassword123!"
 cluster_autoscaler_cluster_names = ["flashscale-eks"]
 
 # 🔧 Fix for RDS
-family = "postgres14"
+family = "postgres15"
