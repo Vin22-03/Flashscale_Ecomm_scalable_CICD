@@ -174,8 +174,9 @@ module "rds" {
   multi_az            = false
   skip_final_snapshot = true
 
+ # ✅ Force to use our VPC
+  db_subnet_group_name   = module.vpc.database_subnet_group
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
-  subnet_ids             = module.vpc.private_subnets
 
   tags = { Project = var.project }
 }
