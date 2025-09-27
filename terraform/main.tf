@@ -125,6 +125,32 @@ resource "aws_ecr_repository" "frontend" {
 }
 
 ############################################################
+# Security Group for RDS
+############################################################
+resource "aws_security_group" "rds_sg" {
+  name        = "${var.project}-rds-sg"
+  description = "Security group for RDS in ${var.project}"
+  vpc_id      = module.vpc.vpc_id
+
+  ingress {
+    description = "Postgres from within VPC"
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr] # limit to VPC range
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = { Project = var.project }
+}
+
+############################################################
 # RDS (Postgres)
 ############################################################
 module "rds" {
@@ -133,7 +159,7 @@ module "rds" {
 
   identifier        = "${var.project}-db"
   engine            = "postgres"
-  engine_version    = "15.8"
+  engine_version    = "15.8" # let AWS pick supported minor version
   instance_class    = "db.t3.micro"
   allocated_storage = 20
 
@@ -148,7 +174,7 @@ module "rds" {
   multi_az            = false
   skip_final_snapshot = true
 
-  vpc_security_group_ids = [module.vpc.default_security_group_id]
+  vpc_security_group_ids = [aws_security_group.rds_sg.id]
   subnet_ids             = module.vpc.private_subnets
 
   tags = { Project = var.project }
