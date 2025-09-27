@@ -174,6 +174,8 @@ module "rds" {
   multi_az            = false
   skip_final_snapshot = true
 
+ # 🚫 Turn off secret rotation & Secrets Manager integration
+  manage_master_user_password = false
 
   # ✅ Correct subnet group creation
   create_db_subnet_group = true
