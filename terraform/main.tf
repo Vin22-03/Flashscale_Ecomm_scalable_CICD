@@ -115,6 +115,10 @@ module "autoscaler_irsa" {
       namespace_service_accounts = ["kube-system:cluster-autoscaler"]
     }
   }
+
+  # 🔧 Pass cluster details to avoid coalescelist error
+  cluster_autoscaler_cluster_names = var.cluster_autoscaler_cluster_names
+  cluster_autoscaler_cluster_ids   = var.cluster_autoscaler_cluster_ids
 }
 
 ############################################################
@@ -137,16 +141,19 @@ module "rds" {
   source  = "terraform-aws-modules/rds/aws"
   version = "6.5.2"
 
-  identifier = "${var.project}-db"
-  engine     = "postgres"
-  engine_version = "15.5"
-  instance_class = "db.t3.micro"
+  identifier        = "${var.project}-db"
+  engine            = "postgres"
+  engine_version    = "15.5"
+  instance_class    = "db.t3.micro"
   allocated_storage = 20
 
   db_name  = "flashscaledb"
   username = "flashadmin"
   password = var.db_password
   port     = 5432
+
+  # 🔧 Fix missing required argument
+  family = var.family
 
   publicly_accessible = false
   multi_az            = false
@@ -161,9 +168,6 @@ module "rds" {
 ############################################################
 # ArgoCD (CD – installed later via Helm)
 ############################################################
-# Note: We’ll use ArgoCD Helm chart in a separate step, after cluster is up.
-# Terraform will create namespace + service account with IRSA if required.
-
 resource "kubernetes_namespace" "argocd" {
   metadata {
     name = "argocd"
