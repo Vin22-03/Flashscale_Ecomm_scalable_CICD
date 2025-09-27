@@ -2,8 +2,16 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'VERSION_TAG', defaultValue: "build-${BUILD_NUMBER}", description: "Docker image version tag (e.g. v1.0-blue)")
-        choice(name: 'DEPLOY_COLOR', choices: ['blue', 'green'], description: "Choose which color to deploy (for Blue/Green)")
+        string(
+            name: 'VERSION_TAG',
+            defaultValue: "V${BUILD_NUMBER}",
+            description: "🔥 Docker Image Version (Auto-incremented as V1, V2, ...)"
+        )
+        choice(
+            name: 'DEPLOY_COLOR',
+            choices: ['blue', 'green'],
+            description: "🎨 Choose Deployment Color (Blue/Green)"
+        )
     }
 
     environment {
@@ -44,7 +52,9 @@ pipeline {
                     sh '''
                         echo "🔨 Building Backend..."
                         docker build -t flashscale-backend:$VERSION_TAG .
-                        docker tag flashscale-backend:$VERSION_TAG $BACKEND_REPO:$VERSION_TAG
+                        
+                        # Tag with Version+Color and latest
+                        docker tag flashscale-backend:$VERSION_TAG $BACKEND_REPO:${VERSION_TAG}-${DEPLOY_COLOR}
                         docker tag flashscale-backend:$VERSION_TAG $BACKEND_REPO:latest
                     '''
                 }
@@ -57,7 +67,9 @@ pipeline {
                     sh '''
                         echo "🎨 Building Frontend..."
                         docker build -t flashscale-frontend:$VERSION_TAG .
-                        docker tag flashscale-frontend:$VERSION_TAG $FRONTEND_REPO:$VERSION_TAG
+                        
+                        # Tag with Version+Color and latest
+                        docker tag flashscale-frontend:$VERSION_TAG $FRONTEND_REPO:${VERSION_TAG}-${DEPLOY_COLOR}
                         docker tag flashscale-frontend:$VERSION_TAG $FRONTEND_REPO:latest
                     '''
                 }
@@ -68,11 +80,11 @@ pipeline {
             steps {
                 sh '''
                     echo "📤 Pushing Backend Image..."
-                    docker push $BACKEND_REPO:$VERSION_TAG
+                    docker push $BACKEND_REPO:${VERSION_TAG}-${DEPLOY_COLOR}
                     docker push $BACKEND_REPO:latest
 
                     echo "📤 Pushing Frontend Image..."
-                    docker push $FRONTEND_REPO:$VERSION_TAG
+                    docker push $FRONTEND_REPO:${VERSION_TAG}-${DEPLOY_COLOR}
                     docker push $FRONTEND_REPO:latest
                 '''
             }
@@ -81,11 +93,10 @@ pipeline {
 
     post {
         success {
-            echo "✅ CI Pipeline Success: Images tagged as $VERSION_TAG and pushed for $DEPLOY_COLOR deployment"
+            echo "✅ CI Pipeline Success: Built & pushed ${VERSION_TAG}-${DEPLOY_COLOR} to ECR"
         }
         failure {
             echo "❌ CI Pipeline Failed: Check logs in Jenkins"
-        
         }
     }
 }
