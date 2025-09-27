@@ -159,7 +159,7 @@ module "rds" {
 
   identifier        = "${var.project}-db"
   engine            = "postgres"
-  engine_version    = "15" # let AWS pick supported minor
+  engine_version    = "15.8" # let AWS pick supported minor
   instance_class    = "db.t3.micro"
   allocated_storage = 20
 
@@ -174,8 +174,12 @@ module "rds" {
   multi_az            = false
   skip_final_snapshot = true
 
-  # ✅ Required fix
+
+  # ✅ Correct subnet group creation
+  create_db_subnet_group = true
   subnet_ids             = module.vpc.private_subnets
+
+  # ✅ SG in the same VPC
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
 
   tags = { Project = var.project }
