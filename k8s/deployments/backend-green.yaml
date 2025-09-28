@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: 921483785411.dkr.ecr.us-east-1.amazonaws.com/flashscale-backend:latest
+          image: 921483785411.dkr.ecr.us-east-1.amazonaws.com/flashscale-backend:__IMAGE_TAG__-green
           ports:
             - containerPort: 8000
           readinessProbe:
@@ -30,9 +30,9 @@ spec:
             httpGet: { path: /health, port: 8000 }
             initialDelaySeconds: 10
           resources:
-           requests:
-             cpu: "100m"
-             memory: "128Mi"
-           limits:
-             cpu: "500m"
-             memory: "512Mi"
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"

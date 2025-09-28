@@ -9,6 +9,8 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Orders from "./pages/Orders";
 import OrderStatus from "./pages/OrderStatus";
+import Health from "./pages/Health";
+import Version from "./pages/Version";
 
 function App() {
   return (
@@ -25,9 +27,11 @@ function App() {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/order-status/:id" element={<OrderStatus />} />
-        </Routes>
+          <Route path="/health" element={<Health />} />
+          <Route path="/version" element={<Version />} />
+	</Routes>
 	  </div>
-        <Footer version="v1.0-blue" />
+        <Footer />
       </div>
     </Router>
   </CartProvider>
