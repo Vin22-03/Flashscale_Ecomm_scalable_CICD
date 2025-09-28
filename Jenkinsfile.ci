@@ -90,26 +90,28 @@ pipeline {
             }
         }
 
-        stage('Update Manifests with Image Tag') {
-            steps {
-                sh '''
-                    echo "📝 Updating manifests with tag ${VERSION_TAG}-${DEPLOY_COLOR}"
+stage('Update Manifests with Image Tag') {
+    steps {
+        withCredentials([usernamePassword(credentialsId: 'github-creds', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
+            sh '''
+                echo "📝 Updating manifests with tag ${VERSION_TAG}-${DEPLOY_COLOR}"
 
-                    # Update backend deployment
-                    sed -i "s|__IMAGE_TAG__|${VERSION_TAG}|g" k8s/deployments/backend-${DEPLOY_COLOR}.yaml
+                # Replace placeholder in backend and frontend manifests
+                sed -i "s|__IMAGE_TAG__|${VERSION_TAG}|g" k8s/deployments/backend-${DEPLOY_COLOR}.yaml
+                sed -i "s|__IMAGE_TAG__|${VERSION_TAG}|g" k8s/deployments/frontend-${DEPLOY_COLOR}.yaml
 
-                    # Update frontend deployment
-                    sed -i "s|__IMAGE_TAG__|${VERSION_TAG}|g" k8s/deployments/frontend-${DEPLOY_COLOR}.yaml
+                git config --global user.email "ci@vincloudops.com"
+                git config --global user.name "Jenkins CI"
 
-                    git config --global user.email "ci@vincloudops.com"
-                    git config --global user.name "Jenkins CI"
-                    git add k8s/deployments/*.yaml
-                    git commit -m "🤖 Update image tags to ${VERSION_TAG}-${DEPLOY_COLOR}"
-                    git push origin main
-                '''
-            }
+                git add k8s/deployments/*.yaml
+                git commit -m "🤖 Update image tags to ${VERSION_TAG}-${DEPLOY_COLOR}" || echo "No changes to commit"
+
+                # Push with injected credentials
+                git push https://${GIT_USER}:${GIT_TOKEN}@github.com/Vin22-03/Flashscale_Ecomm_scalable_CICD.git HEAD:main
+            '''
         }
     }
+}
 
     post {
         success {
