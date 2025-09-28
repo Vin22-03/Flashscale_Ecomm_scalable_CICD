@@ -1,7 +1,10 @@
+# kustomization.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+
+# These are the files in the k8s directory.
 resources:
   - namespace.yaml
-  - services/
-  - deployments/
   - ingress.yaml
+  - deployments
+  - services
