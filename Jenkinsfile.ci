@@ -52,7 +52,7 @@ pipeline {
                     sh '''
                         echo "🔨 Building Backend..."
                         docker build -t flashscale-backend:$VERSION_TAG .
-                        
+
                         # Tag with Version+Color and latest
                         docker tag flashscale-backend:$VERSION_TAG $BACKEND_REPO:${VERSION_TAG}-${DEPLOY_COLOR}
                         docker tag flashscale-backend:$VERSION_TAG $BACKEND_REPO:latest
@@ -67,7 +67,7 @@ pipeline {
                     sh '''
                         echo "🎨 Building Frontend..."
                         docker build -t flashscale-frontend:$VERSION_TAG .
-                        
+
                         # Tag with Version+Color and latest
                         docker tag flashscale-frontend:$VERSION_TAG $FRONTEND_REPO:${VERSION_TAG}-${DEPLOY_COLOR}
                         docker tag flashscale-frontend:$VERSION_TAG $FRONTEND_REPO:latest
@@ -90,36 +90,36 @@ pipeline {
             }
         }
 
-stage('Update Manifests with Image Tag') {
-    steps {
-        withCredentials([usernamePassword(credentialsId: 'github-creds', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
-            sh '''
-                echo "📝 Updating manifests with tag ${VERSION_TAG}-${DEPLOY_COLOR}"
+        stage('Update Manifests with Image Tag') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'github-creds', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
+                    sh '''
+                        echo "📝 Updating manifests with tag ${VERSION_TAG}-${DEPLOY_COLOR}"
 
-                # Replace placeholder in backend and frontend manifests
-                sed -i "s|__IMAGE_TAG__|${VERSION_TAG}|g" k8s/deployments/backend-${DEPLOY_COLOR}.yaml
-                sed -i "s|__IMAGE_TAG__|${VERSION_TAG}|g" k8s/deployments/frontend-${DEPLOY_COLOR}.yaml
+                        # Replace placeholder in manifests
+                        sed -i "s|__IMAGE_TAG__|${VERSION_TAG}|g" k8s/deployments/backend-${DEPLOY_COLOR}.yaml
+                        sed -i "s|__IMAGE_TAG__|${VERSION_TAG}|g" k8s/deployments/frontend-${DEPLOY_COLOR}.yaml
 
-                git config --global user.email "ci@vincloudops.com"
-                git config --global user.name "Jenkins CI"
+                        git config --global user.email "ci@vincloudops.com"
+                        git config --global user.name "Jenkins CI"
 
-                git add k8s/deployments/*.yaml
-                git commit -m "🤖 Update image tags to ${VERSION_TAG}-${DEPLOY_COLOR}" || echo "No changes to commit"
+                        git add k8s/deployments/*.yaml
+                        git commit -m "🤖 Update image tags to ${VERSION_TAG}-${DEPLOY_COLOR}" || echo "No changes to commit"
 
-                # Push with injected credentials
-                git push https://${GIT_USER}:${GIT_TOKEN}@github.com/Vin22-03/Flashscale_Ecomm_scalable_CICD.git HEAD:main
-            '''
+                        echo "🚀 Pushing changes back to GitHub..."
+                        git push https://${GIT_USER}:${GIT_TOKEN}@github.com/Vin22-03/Flashscale_Ecomm_scalable_CICD.git HEAD:main
+                    '''
+                }
+            }
         }
     }
-}
 
     post {
         success {
-            echo "✅ CI Pipeline Success: Built, pushed, and updated manifests for ${VERSION_TAG}-${DEPLOY_COLOR}"
+            echo "✅ CI Pipeline Success: Built & pushed ${VERSION_TAG}-${DEPLOY_COLOR} to ECR, updated manifests"
         }
         failure {
             echo "❌ CI Pipeline Failed: Check logs in Jenkins"
-         }
-      }
-   }
+        }
+    }
 }
