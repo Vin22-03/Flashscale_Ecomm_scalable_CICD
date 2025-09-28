@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: 921483785411.dkr.ecr.us-east-1.amazonaws.com/flashscale-frontend:__IMAGE_TAG__-green
+          image: 921483785411.dkr.ecr.us-east-1.amazonaws.com/flashscale-frontend:V8-green
           ports:
             - containerPort: 80
           readinessProbe:
