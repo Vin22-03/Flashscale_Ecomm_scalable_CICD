@@ -66,7 +66,13 @@ pipeline {
                 dir('frontend') {
                     sh '''
                         echo "🎨 Building Frontend..."
-                        docker build -t flashscale-frontend:$VERSION_TAG .
+                        BUILD_TIME=$(date -u +"%d %b %Y, %H:%M:%S UTC")
+
+                        docker build \
+                          --build-arg APP_VERSION=${VERSION_TAG} \
+                          --build-arg DEPLOY_COLOR=${DEPLOY_COLOR} \
+                          --build-arg BUILD_TIME="$BUILD_TIME" \
+                          -t flashscale-frontend:$VERSION_TAG .
 
                         # Tag with Version+Color and latest
                         docker tag flashscale-frontend:$VERSION_TAG $FRONTEND_REPO:${VERSION_TAG}-${DEPLOY_COLOR}
@@ -96,9 +102,9 @@ pipeline {
                     sh '''
                         echo "📝 Updating manifests with tag ${VERSION_TAG}-${DEPLOY_COLOR}"
 
-                        # Replace placeholder in manifests
-                        sed -i "s|__IMAGE_TAG__|${VERSION_TAG}|g" k8s/deployments/backend-${DEPLOY_COLOR}.yaml
-                        sed -i "s|__IMAGE_TAG__|${VERSION_TAG}|g" k8s/deployments/frontend-${DEPLOY_COLOR}.yaml
+                        # ✅ Replace the entire image line in manifests
+                        sed -i "s|image:.*flashscale-backend:.*|image: $BACKEND_REPO:${VERSION_TAG}-${DEPLOY_COLOR}|g" k8s/deployments/backend-${DEPLOY_COLOR}.yaml
+                        sed -i "s|image:.*flashscale-frontend:.*|image: $FRONTEND_REPO:${VERSION_TAG}-${DEPLOY_COLOR}|g" k8s/deployments/frontend-${DEPLOY_COLOR}.yaml
 
                         git config --global user.email "ci@vincloudops.com"
                         git config --global user.name "Jenkins CI"
