@@ -89,11 +89,31 @@ pipeline {
                 '''
             }
         }
+
+        stage('Update Manifests with Image Tag') {
+            steps {
+                sh '''
+                    echo "📝 Updating manifests with tag ${VERSION_TAG}-${DEPLOY_COLOR}"
+
+                    # Update backend deployment
+                    sed -i "s|__IMAGE_TAG__|${VERSION_TAG}|g" k8s/deployments/backend-${DEPLOY_COLOR}.yaml
+
+                    # Update frontend deployment
+                    sed -i "s|__IMAGE_TAG__|${VERSION_TAG}|g" k8s/deployments/frontend-${DEPLOY_COLOR}.yaml
+
+                    git config --global user.email "ci@vincloudops.com"
+                    git config --global user.name "Jenkins CI"
+                    git add k8s/deployments/*.yaml
+                    git commit -m "🤖 Update image tags to ${VERSION_TAG}-${DEPLOY_COLOR}"
+                    git push origin main
+                '''
+            }
+        }
     }
 
     post {
         success {
-            echo "✅ CI Pipeline Success: Built & pushed ${VERSION_TAG}-${DEPLOY_COLOR} to ECR"
+            echo "✅ CI Pipeline Success: Built, pushed, and updated manifests for ${VERSION_TAG}-${DEPLOY_COLOR}"
         }
         failure {
             echo "❌ CI Pipeline Failed: Check logs in Jenkins"
