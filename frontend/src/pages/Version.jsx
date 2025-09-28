@@ -1,49 +1,47 @@
-import React, { useEffect, useState } from "react";
-import NavBar from "../components/NavBar";
-import Footer from "../components/Footer";
-
 export default function Version() {
-  const [versionInfo, setVersionInfo] = useState(null);
-
-  useEffect(() => {
-    fetch("/version")
-      .then((res) => res.json())
-      .then((data) => setVersionInfo(data))
-      .catch(() => setVersionInfo({ error: "Failed to fetch version info" }));
-  }, []);
+  const version = process.env.REACT_APP_VERSION || "unknown";
+  const color = process.env.REACT_APP_COLOR || "unknown";
+  const buildTime = process.env.REACT_APP_BUILD_TIME || "unknown";
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <NavBar />
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-100 via-white to-green-100">
       <main className="flex-grow flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-blue-600 mb-4">
-            📌 Application Version
+        <div className="bg-white shadow-2xl rounded-2xl p-10 text-center max-w-md border border-gray-200">
+          <h1 className="text-4xl font-extrabold text-blue-700 mb-6 drop-shadow-lg">
+            🚀 Application Version
           </h1>
-          {versionInfo ? (
-            versionInfo.error ? (
-              <p className="text-red-600">{versionInfo.error}</p>
-            ) : (
-              <div className="bg-white shadow-md rounded-lg p-6 inline-block">
-                <p className="text-lg font-semibold">
-                  App: <span className="text-gray-800">{versionInfo.app}</span>
-                </p>
-                <p className="text-lg font-semibold">
-                  Version:{" "}
-                  <span className="text-green-600">{versionInfo.version}</span>
-                </p>
-                <p className="text-lg font-semibold">
-                  Environment:{" "}
-                  <span className="text-purple-600">{versionInfo.env}</span>
-                </p>
-              </div>
-            )
-          ) : (
-            <p className="text-gray-500">Loading version info...</p>
-          )}
+
+          <p className="text-lg mb-4">
+            <span className="font-semibold text-gray-700">Version:</span>{" "}
+            <span className="text-green-600">{version}</span>
+          </p>
+
+          <p className="text-lg mb-4">
+            <span className="font-semibold text-gray-700">Deployment Color:</span>{" "}
+            <span
+              className={
+                color === "blue"
+                  ? "text-blue-600 font-bold"
+                  : "text-green-600 font-bold"
+              }
+            >
+              {color}
+            </span>
+          </p>
+
+          <div className="mt-6 bg-gray-50 shadow-inner rounded-xl p-4">
+            <p className="text-md text-gray-800">
+              <span className="font-semibold">🕒 Build Time:</span>
+              <br />
+              {buildTime}
+            </p>
+          </div>
+
+          <div className="mt-6 p-3 rounded-xl bg-gradient-to-r from-green-200 to-blue-200 shadow">
+            ✅ This is the currently deployed build!
+          </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }
