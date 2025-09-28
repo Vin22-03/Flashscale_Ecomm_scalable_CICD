@@ -13,11 +13,17 @@ ENV REACT_APP_VERSION=$APP_VERSION
 ENV REACT_APP_COLOR=$DEPLOY_COLOR
 ENV REACT_APP_BUILD_TIME=$BUILD_TIME
 
-# Copy package files and install dependencies
+# 🔹 Copy package files and install dependencies with retries
 COPY package*.json ./
-RUN npm install
 
-# Copy source code and build (now REACT_APP_* vars are baked into bundle)
+# Configure npm registry + retries to avoid ETIMEDOUT
+RUN npm config set registry https://registry.npmjs.org/ \
+    && npm config set fetch-retries 5 \
+    && npm config set fetch-retry-mintimeout 20000 \
+    && npm config set fetch-retry-maxtimeout 120000 \
+    && npm install --legacy-peer-deps
+
+# 🔹 Copy source code and build (REACT_APP_* baked in here)
 COPY . .
 RUN npm run build
 
