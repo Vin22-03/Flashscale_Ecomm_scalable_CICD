@@ -119,6 +119,7 @@ stage('Update Manifests with Image Tag') {
         }
         failure {
             echo "❌ CI Pipeline Failed: Check logs in Jenkins"
-        }
-    }
+         }
+      }
+   }
 }
