@@ -4,14 +4,14 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # 🔹 Accept build arguments (will be passed from Jenkins)
-ARG REACT_APP_VERSION="dev"
-ARG REACT_APP_COLOR="none"
-ARG REACT_APP_BUILD_TIME="unknown"
+ARG VITE_APP_VERSION="dev"
+ARG VITE_APP_COLOR="none"
+ARG VITE_APP_BUILD_TIME="unknown"
 
-# 🔹 Expose them as ENV so React build can access them
-ENV REACT_APP_VERSION=$REACT_APP_VERSION
-ENV REACT_APP_COLOR=$REACT_APP_COLOR
-ENV REACT_APP_BUILD_TIME=$REACT_APP_BUILD_TIME
+# 🔹 Expose them so Vite can inject into build
+ENV VITE_APP_VERSION=$VITE_APP_VERSION
+ENV VITE_APP_COLOR=$VITE_APP_COLOR
+ENV VITE_APP_BUILD_TIME=$VITE_APP_BUILD_TIME
 
 # Install dependencies
 COPY package*.json ./
