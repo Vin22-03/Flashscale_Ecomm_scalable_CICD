@@ -1,18 +1,19 @@
-# Use official lightweight Python image
 FROM python:3.11-slim
-
-# Set work directory
 WORKDIR /app
 
-# Install dependencies first (for faster rebuilds)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend code
 COPY . .
 
-# Expose FastAPI port
-EXPOSE 8000
+# 🔹 Inject build metadata
+ARG APP_VERSION="dev"
+ARG DEPLOY_COLOR="none"
+ARG BUILD_TIME="unknown"
 
-# Run Uvicorn server
+ENV APP_VERSION=$APP_VERSION
+ENV DEPLOY_COLOR=$DEPLOY_COLOR
+ENV BUILD_TIME=$BUILD_TIME
+
+EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

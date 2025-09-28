@@ -51,7 +51,13 @@ pipeline {
                 dir('backend') {
                     sh '''
                         echo "🔨 Building Backend..."
-                        docker build -t flashscale-backend:$VERSION_TAG .
+                        BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+                        docker build \
+                          --build-arg APP_VERSION=${VERSION_TAG} \
+                          --build-arg DEPLOY_COLOR=${DEPLOY_COLOR} \
+                          --build-arg BUILD_TIME="$BUILD_TIME" \
+                          -t flashscale-backend:$VERSION_TAG .
 
                         # Tag with Version+Color and latest
                         docker tag flashscale-backend:$VERSION_TAG $BACKEND_REPO:${VERSION_TAG}-${DEPLOY_COLOR}
@@ -102,7 +108,7 @@ pipeline {
                     sh '''
                         echo "📝 Updating manifests with tag ${VERSION_TAG}-${DEPLOY_COLOR}"
 
-                        # Replace ANY existing tag in manifests with the new one
+                        # Replace ANY existing tag in manifests with new one
                         sed -i "s|image:.*flashscale-backend:.*|image: ${BACKEND_REPO}:${VERSION_TAG}-${DEPLOY_COLOR}|g" k8s/deployments/backend-${DEPLOY_COLOR}.yaml
                         sed -i "s|image:.*flashscale-frontend:.*|image: ${FRONTEND_REPO}:${VERSION_TAG}-${DEPLOY_COLOR}|g" k8s/deployments/frontend-${DEPLOY_COLOR}.yaml
 

@@ -98,6 +98,16 @@ def get_orders():
     return orders
 
 
+
+@app.get("/build-info")
+def build_info():
+    return {
+        "version": os.getenv("APP_VERSION", "unknown"),
+        "color": os.getenv("DEPLOY_COLOR", "unknown"),
+        "build_time": os.getenv("BUILD_TIME", "unknown")
+    }
+
+
 # Order status
 @app.get("/order-status/{order_id}")
 def get_order_status(order_id: int):
