@@ -3,6 +3,14 @@ export default function Version() {
   const color = process.env.REACT_APP_COLOR || "unknown";
   const buildTime = process.env.REACT_APP_BUILD_TIME || "unknown";
 
+  // Decide badge colors
+  const colorClass =
+    color === "blue"
+      ? "bg-blue-100 text-blue-700 border-blue-300"
+      : color === "green"
+      ? "bg-green-100 text-green-700 border-green-300"
+      : "bg-gray-100 text-gray-600 border-gray-300";
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-100 via-white to-green-100">
       <main className="flex-grow flex items-center justify-center">
@@ -11,24 +19,28 @@ export default function Version() {
             🚀 Application Version
           </h1>
 
+          {/* Version */}
           <p className="text-lg mb-4">
             <span className="font-semibold text-gray-700">Version:</span>{" "}
-            <span className="text-green-600">{version}</span>
+            <span
+              className={`px-3 py-1 rounded-full border ${version === "unknown"
+                ? "bg-gray-100 text-gray-600 border-gray-300"
+                : "bg-purple-100 text-purple-700 border-purple-300"
+              }`}
+            >
+              {version}
+            </span>
           </p>
 
+          {/* Deployment Color */}
           <p className="text-lg mb-4">
             <span className="font-semibold text-gray-700">Deployment Color:</span>{" "}
-            <span
-              className={
-                color === "blue"
-                  ? "text-blue-600 font-bold"
-                  : "text-green-600 font-bold"
-              }
-            >
+            <span className={`px-3 py-1 rounded-full border ${colorClass}`}>
               {color}
             </span>
           </p>
 
+          {/* Build Time */}
           <div className="mt-6 bg-gray-50 shadow-inner rounded-xl p-4">
             <p className="text-md text-gray-800">
               <span className="font-semibold">🕒 Build Time:</span>
@@ -37,7 +49,8 @@ export default function Version() {
             </p>
           </div>
 
-          <div className="mt-6 p-3 rounded-xl bg-gradient-to-r from-green-200 to-blue-200 shadow">
+          {/* Success Banner */}
+          <div className="mt-6 p-3 rounded-xl bg-gradient-to-r from-green-200 to-blue-200 shadow font-semibold text-gray-800">
             ✅ This is the currently deployed build!
           </div>
         </div>

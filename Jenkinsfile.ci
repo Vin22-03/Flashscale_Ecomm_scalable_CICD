@@ -66,12 +66,12 @@ pipeline {
                 dir('frontend') {
                     sh '''
                         echo "🎨 Building Frontend..."
-                        BUILD_TIME=$(date -u +"%d %b %Y, %H:%M:%S UTC")
+                        BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
                         docker build \
-                          --build-arg APP_VERSION=${VERSION_TAG} \
-                          --build-arg DEPLOY_COLOR=${DEPLOY_COLOR} \
-                          --build-arg BUILD_TIME="$BUILD_TIME" \
+                          --build-arg REACT_APP_VERSION=${VERSION_TAG} \
+                          --build-arg REACT_APP_COLOR=${DEPLOY_COLOR} \
+                          --build-arg REACT_APP_BUILD_TIME="$BUILD_TIME" \
                           -t flashscale-frontend:$VERSION_TAG .
 
                         # Tag with Version+Color and latest
@@ -102,9 +102,9 @@ pipeline {
                     sh '''
                         echo "📝 Updating manifests with tag ${VERSION_TAG}-${DEPLOY_COLOR}"
 
-                        # ✅ Replace the entire image line in manifests
-                        sed -i "s|image:.*flashscale-backend:.*|image: $BACKEND_REPO:${VERSION_TAG}-${DEPLOY_COLOR}|g" k8s/deployments/backend-${DEPLOY_COLOR}.yaml
-                        sed -i "s|image:.*flashscale-frontend:.*|image: $FRONTEND_REPO:${VERSION_TAG}-${DEPLOY_COLOR}|g" k8s/deployments/frontend-${DEPLOY_COLOR}.yaml
+                        # Replace placeholder in backend and frontend manifests
+                        sed -i "s|__IMAGE_TAG__|${VERSION_TAG}|g" k8s/deployments/backend-${DEPLOY_COLOR}.yaml
+                        sed -i "s|__IMAGE_TAG__|${VERSION_TAG}|g" k8s/deployments/frontend-${DEPLOY_COLOR}.yaml
 
                         git config --global user.email "ci@vincloudops.com"
                         git config --global user.name "Jenkins CI"
@@ -112,7 +112,7 @@ pipeline {
                         git add k8s/deployments/*.yaml
                         git commit -m "🤖 Update image tags to ${VERSION_TAG}-${DEPLOY_COLOR}" || echo "No changes to commit"
 
-                        echo "🚀 Pushing changes back to GitHub..."
+                        # Push with injected credentials
                         git push https://${GIT_USER}:${GIT_TOKEN}@github.com/Vin22-03/Flashscale_Ecomm_scalable_CICD.git HEAD:main
                     '''
                 }
@@ -122,7 +122,7 @@ pipeline {
 
     post {
         success {
-            echo "✅ CI Pipeline Success: Built & pushed ${VERSION_TAG}-${DEPLOY_COLOR} to ECR, updated manifests"
+            echo "✅ CI Pipeline Success: Built, pushed, and updated manifests for ${VERSION_TAG}-${DEPLOY_COLOR}"
         }
         failure {
             echo "❌ CI Pipeline Failed: Check logs in Jenkins"
