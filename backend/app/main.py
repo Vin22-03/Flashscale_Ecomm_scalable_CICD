@@ -4,17 +4,21 @@ from typing import List, Dict
 import time
 from fastapi.middleware.cors import CORSMiddleware
 import os
-from app.routes import version, products, cart, orders, status  # ✅ import routes
 
+# Prometheus
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST, Counter
+from starlette.responses import Response
 
+# Import routes (if you still use them)
+from app.routes import version, products as products_router, cart, orders as orders_router, status
 
-# ✅ Create FastAPI app first
+# ✅ Create FastAPI app
 app = FastAPI()
 
 # ✅ Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # for dev, later restrict to frontend domain
+    allow_origins=["*"],   # For dev, later restrict to frontend domain
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -22,12 +26,12 @@ app.add_middleware(
 
 # ✅ Register routers
 app.include_router(version.router, prefix="/api")
-app.include_router(products.router, prefix="/api")
+app.include_router(products_router.router, prefix="/api")
 app.include_router(cart.router, prefix="/api")
-app.include_router(orders.router, prefix="/api")
+app.include_router(orders_router.router, prefix="/api")
 app.include_router(status.router, prefix="/api")
 
-# Mock DB
+# ---------------- Mock DB ----------------
 products = [
     {
         "id": 1,
@@ -49,14 +53,12 @@ products = [
 
 orders: List[Dict] = []
 
-
-# Models
+# ---------------- Models ----------------
 class Customer(BaseModel):
     name: str
     address: str
     phone: str
     email: str
-
 
 class CartItem(BaseModel):
     id: int
@@ -64,46 +66,47 @@ class CartItem(BaseModel):
     price: int
     quantity: int
 
-
 class Order(BaseModel):
     id: int
     customer: Customer
     items: List[CartItem]
     status: str = "Processing"
 
+# ---------------- Prometheus Counters ----------------
+ORDER_COUNTER = Counter("flashscale_orders_total", "Total number of orders placed")
+PRODUCTS_COUNTER = Counter("flashscale_products_total", "Total number of products viewed")
+
+# ---------------- Endpoints ----------------
 
 # 🔹 Root endpoint
 @app.get("/")
 def root():
     return {"message": "FlashScale Backend is running 🚀"}
 
-
-# 🔹 Health check (for monitoring & probes)
+# 🔹 Health check
 @app.get("/health")
 def health_check():
     return {"status": "ok", "timestamp": time.time()}
 
-
-# Products API
+# 🔹 Products API
 @app.get("/products")
 def get_products():
+    PRODUCTS_COUNTER.inc()   # increment each time products are viewed
     return products
 
-
-# Checkout (place order)
+# 🔹 Checkout (place order)
 @app.post("/checkout")
 def checkout(order: Order):
     orders.append(order.dict())
+    ORDER_COUNTER.inc()      # increment order counter
     return {"message": "Order placed", "orderId": order.id}
 
-
-# Orders
+# 🔹 Orders
 @app.get("/orders")
 def get_orders():
     return orders
 
-
-
+# 🔹 Build info (for Blue/Green deploys)
 @app.get("/build-info")
 def build_info():
     return {
@@ -112,11 +115,15 @@ def build_info():
         "build_time": os.getenv("BUILD_TIME", "unknown")
     }
 
-
-# Order status
+# 🔹 Order status
 @app.get("/order-status/{order_id}")
 def get_order_status(order_id: int):
     for o in orders:
         if o["id"] == order_id:
             return o
     return {"error": "Order not found"}
+
+# 🔹 Prometheus metrics endpoint
+@app.get("/metrics")
+def metrics():
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)

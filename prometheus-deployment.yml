@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus-flashscale
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus-flashscale
+  template:
+    metadata:
+      labels:
+        app: prometheus-flashscale
+    spec:
+      containers:
+      - name: prometheus
+        image: prom/prometheus:v2.52.0
+        args:
+          - "--config.file=/etc/prometheus/prometheus.yml"
+          - "--storage.tsdb.path=/prometheus/"
+        ports:
+        - containerPort: 9090
+          name: web
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/prometheus/
+        - name: data
+          mountPath: /prometheus
+      volumes:
+      - name: config-volume
+        configMap:
+          name: prometheus-flashscale
+      - name: data
+        emptyDir: {}
