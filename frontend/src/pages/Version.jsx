@@ -1,7 +1,22 @@
 export default function Version() {
   const version = import.meta.env.VITE_APP_VERSION || "unknown";
   const color = import.meta.env.VITE_APP_COLOR || "none";
-  const buildTime = import.meta.env.VITE_APP_BUILD_TIME || "unknown";
+  const buildTimeRaw = import.meta.env.VITE_APP_BUILD_TIME || "unknown";
+
+  // Convert build time to IST (12-hour AM/PM format)
+  const buildTime =
+    buildTimeRaw !== "unknown"
+      ? new Date(buildTimeRaw).toLocaleString("en-IN", {
+          timeZone: "Asia/Kolkata",
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true, // ✅ AM/PM format
+        })
+      : "unknown";
 
   const colorClass =
     color === "blue"
@@ -11,7 +26,7 @@ export default function Version() {
       : "bg-gray-100 text-gray-600 border-gray-300";
 
   return (
-    <main className="flex-grow flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-green-100">
+    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-green-100">
       <div className="bg-white shadow-2xl rounded-2xl p-10 text-center max-w-md border border-gray-200">
         <h1 className="text-4xl font-extrabold text-blue-700 mb-6 drop-shadow-lg">
           🚀 Application Version
@@ -36,7 +51,7 @@ export default function Version() {
         {/* Build Time */}
         <div className="mt-6 bg-gray-50 shadow-inner rounded-xl p-4">
           <p className="text-md text-gray-800">
-            <span className="font-semibold">🕒 Build Time:</span>
+            <span className="font-semibold">🕒 Build Time (IST):</span>
             <br />
             {buildTime}
           </p>
