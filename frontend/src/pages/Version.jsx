@@ -8,7 +8,7 @@ export default function Version() {
   });
 
   useEffect(() => {
-    fetch("http://<BACKEND-SERVICE-URL>/build-info")
+    fetch("http://adcebb72e02d5438589fd837eeea32f2-477007170.us-east-1.elb.amazonaws.com/api/build-info")
       .then(res => res.json())
       .then(data => setInfo(data))
       .catch(() => setInfo({ version: "error", color: "error", build_time: "error" }));
