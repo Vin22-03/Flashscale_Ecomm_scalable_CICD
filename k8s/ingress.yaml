@@ -17,13 +17,13 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: flashscale-frontend-svc
+                name: flashscale-frontend
                 port:
                   number: 80
           - path: /api
             pathType: Prefix
             backend:
               service:
-                name: flashscale-backend-svc
+                name: flashscale-backend
                 port:
                   number: 8000
