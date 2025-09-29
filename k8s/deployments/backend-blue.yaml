@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: 921483785411.dkr.ecr.us-east-1.amazonaws.com/flashscale-backend:V5-blue
+          image: 921483785411.dkr.ecr.us-east-1.amazonaws.com/flashscale-backend:V26-blue
           ports:
             - containerPort: 8000
           readinessProbe:
