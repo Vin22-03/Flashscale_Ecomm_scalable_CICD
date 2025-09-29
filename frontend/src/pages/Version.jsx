@@ -8,10 +8,12 @@ export default function Version() {
   });
 
   useEffect(() => {
-    fetch("http://adcebb72e02d5438589fd837eeea32f2-477007170.us-east-1.elb.amazonaws.com/api/build-info")
+    fetch("/api/build-info")
       .then(res => res.json())
       .then(data => setInfo(data))
-      .catch(() => setInfo({ version: "error", color: "error", build_time: "error" }));
+      .catch(() =>
+        setInfo({ version: "error", color: "error", build_time: "error" })
+      );
   }, []);
 
   const colorClass =
@@ -22,40 +24,42 @@ export default function Version() {
       : "bg-gray-100 text-gray-600 border-gray-300";
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-100 via-white to-green-100">
-      <main className="flex-grow flex items-center justify-center">
-        <div className="bg-white shadow-2xl rounded-2xl p-10 text-center max-w-md border border-gray-200">
-          <h1 className="text-4xl font-extrabold text-blue-700 mb-6 drop-shadow-lg">
-            🚀 Application Version
-          </h1>
+    <main className="flex-grow flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-green-100">
+      <div className="bg-white shadow-2xl rounded-2xl p-10 text-center max-w-md border border-gray-200">
+        <h1 className="text-4xl font-extrabold text-blue-700 mb-6 drop-shadow-lg">
+          🚀 Application Version
+        </h1>
 
-          <p className="text-lg mb-4">
-            <span className="font-semibold text-gray-700">Version:</span>{" "}
-            <span className="px-3 py-1 rounded-full border bg-purple-100 text-purple-700 border-purple-300">
-              {info.version}
-            </span>
+        {/* Version */}
+        <p className="text-lg mb-4">
+          <span className="font-semibold text-gray-700">Version:</span>{" "}
+          <span className="px-3 py-1 rounded-full border bg-purple-100 text-purple-700 border-purple-300">
+            {info.version}
+          </span>
+        </p>
+
+        {/* Deployment Color */}
+        <p className="text-lg mb-4">
+          <span className="font-semibold text-gray-700">Deployment Color:</span>{" "}
+          <span className={`px-3 py-1 rounded-full border ${colorClass}`}>
+            {info.color}
+          </span>
+        </p>
+
+        {/* Build Time */}
+        <div className="mt-6 bg-gray-50 shadow-inner rounded-xl p-4">
+          <p className="text-md text-gray-800">
+            <span className="font-semibold">🕒 Build Time:</span>
+            <br />
+            {info.build_time}
           </p>
-
-          <p className="text-lg mb-4">
-            <span className="font-semibold text-gray-700">Deployment Color:</span>{" "}
-            <span className={`px-3 py-1 rounded-full border ${colorClass}`}>
-              {info.color}
-            </span>
-          </p>
-
-          <div className="mt-6 bg-gray-50 shadow-inner rounded-xl p-4">
-            <p className="text-md text-gray-800">
-              <span className="font-semibold">🕒 Build Time:</span>
-              <br />
-              {info.build_time}
-            </p>
-          </div>
-
-          <div className="mt-6 p-3 rounded-xl bg-gradient-to-r from-green-200 to-blue-200 shadow font-semibold text-gray-800">
-            ✅ This is the currently deployed build!
-          </div>
         </div>
-      </main>
-    </div>
+
+        {/* Banner */}
+        <div className="mt-6 p-3 rounded-xl bg-gradient-to-r from-green-200 to-blue-200 shadow font-semibold text-gray-800">
+          ✅ This is the currently deployed build!
+        </div>
+      </div>
+    </main>
   );
 }

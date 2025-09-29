@@ -4,6 +4,9 @@ from typing import List, Dict
 import time
 from fastapi.middleware.cors import CORSMiddleware
 import os
+from app.routes import version, products, cart, orders, status  # ✅ import routes
+
+
 
 # ✅ Create FastAPI app first
 app = FastAPI()
@@ -16,6 +19,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ✅ Register routers
+app.include_router(version.router, prefix="/api")
+app.include_router(products.router, prefix="/api")
+app.include_router(cart.router, prefix="/api")
+app.include_router(orders.router, prefix="/api")
+app.include_router(status.router, prefix="/api")
 
 # Mock DB
 products = [
@@ -72,12 +82,6 @@ def root():
 @app.get("/health")
 def health_check():
     return {"status": "ok", "timestamp": time.time()}
-
-
-# 🔹 Version check (useful in Blue/Green deploys)
-@app.get("/version")
-def version_info():
-    return {"version": "v1.0.0", "build": "flashscale-initial"}
 
 
 # Products API
