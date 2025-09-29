@@ -3,6 +3,16 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# 🔹 Accept build arguments (passed from Jenkins)
+ARG VITE_APP_VERSION="dev"
+ARG VITE_APP_COLOR="none"
+ARG VITE_APP_BUILD_TIME="unknown"
+
+# 🔹 Expose them so Vite can inject into build
+ENV VITE_APP_VERSION=$VITE_APP_VERSION
+ENV VITE_APP_COLOR=$VITE_APP_COLOR
+ENV VITE_APP_BUILD_TIME=$VITE_APP_BUILD_TIME
+
 # Install dependencies
 COPY package*.json ./
 RUN npm install --legacy-peer-deps
@@ -13,14 +23,8 @@ RUN npm run build
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
-
-# Clean default html
 RUN rm -rf /usr/share/nginx/html/*
-
-# Copy built frontend
 COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Copy nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80

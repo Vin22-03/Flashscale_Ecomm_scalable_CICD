@@ -1,25 +1,12 @@
-import { useEffect, useState } from "react";
-
 export default function Version() {
-  const [info, setInfo] = useState({
-    version: "loading...",
-    color: "loading...",
-    build_time: "loading..."
-  });
-
-  useEffect(() => {
-    fetch("/api/build-info")
-      .then(res => res.json())
-      .then(data => setInfo(data))
-      .catch(() =>
-        setInfo({ version: "error", color: "error", build_time: "error" })
-      );
-  }, []);
+  const version = import.meta.env.VITE_APP_VERSION || "unknown";
+  const color = import.meta.env.VITE_APP_COLOR || "none";
+  const buildTime = import.meta.env.VITE_APP_BUILD_TIME || "unknown";
 
   const colorClass =
-    info.color === "blue"
+    color === "blue"
       ? "bg-blue-100 text-blue-700 border-blue-300"
-      : info.color === "green"
+      : color === "green"
       ? "bg-green-100 text-green-700 border-green-300"
       : "bg-gray-100 text-gray-600 border-gray-300";
 
@@ -34,7 +21,7 @@ export default function Version() {
         <p className="text-lg mb-4">
           <span className="font-semibold text-gray-700">Version:</span>{" "}
           <span className="px-3 py-1 rounded-full border bg-purple-100 text-purple-700 border-purple-300">
-            {info.version}
+            {version}
           </span>
         </p>
 
@@ -42,7 +29,7 @@ export default function Version() {
         <p className="text-lg mb-4">
           <span className="font-semibold text-gray-700">Deployment Color:</span>{" "}
           <span className={`px-3 py-1 rounded-full border ${colorClass}`}>
-            {info.color}
+            {color}
           </span>
         </p>
 
@@ -51,7 +38,7 @@ export default function Version() {
           <p className="text-md text-gray-800">
             <span className="font-semibold">🕒 Build Time:</span>
             <br />
-            {info.build_time}
+            {buildTime}
           </p>
         </div>
 
