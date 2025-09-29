@@ -7,7 +7,7 @@ spec:
   type: LoadBalancer
   selector:
     app: flashscale-frontend
-    color: green
+    color: blue
   ports:
     - port: 80
       targetPort: 80

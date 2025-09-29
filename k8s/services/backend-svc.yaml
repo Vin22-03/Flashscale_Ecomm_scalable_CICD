@@ -7,7 +7,7 @@ spec:
   type: ClusterIP
   selector:
     app: flashscale-backend
-    color: green
+    color: blue
   ports:
     - port: 8000
       targetPort: 8000
