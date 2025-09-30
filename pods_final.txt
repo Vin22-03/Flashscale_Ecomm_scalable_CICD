@@ -1,0 +1,9 @@
+NAME                                         READY   STATUS    RESTARTS   AGE
+flashscale-backend-blue-5d64bd4bfb-272gq     1/1     Running   0          23m
+flashscale-backend-blue-5d64bd4bfb-p4q2w     1/1     Running   0          50m
+flashscale-backend-green-fd6f6df6d-4x997     1/1     Running   0          11h
+flashscale-backend-green-fd6f6df6d-zt9mr     1/1     Running   0          11h
+flashscale-frontend-blue-65b99f7dd4-4zpvk    1/1     Running   0          6h28m
+flashscale-frontend-blue-65b99f7dd4-n575f    1/1     Running   0          6h28m
+flashscale-frontend-green-7ddcc8b8d8-gzdqk   1/1     Running   0          11h
+flashscale-frontend-green-7ddcc8b8d8-lh4hw   1/1     Running   0          11h

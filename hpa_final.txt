@@ -1,0 +1,5 @@
+NAME                 REFERENCE                              TARGETS         MINPODS   MAXPODS   REPLICAS   AGE
+backend-hpa-blue     Deployment/flashscale-backend-blue     2%/60%          2         10        2          31h
+backend-hpa-green    Deployment/flashscale-backend-green    <unknown>/60%   2         10        2          35h
+frontend-hpa-blue    Deployment/flashscale-frontend-blue    1%/70%          2         10        2          31h
+frontend-hpa-green   Deployment/flashscale-frontend-green   <unknown>/60%   2         10        2          35h
